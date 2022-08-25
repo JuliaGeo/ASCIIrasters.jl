@@ -1,5 +1,5 @@
 module ASCIIrasters
 
-include("src/io.jl")
+include("io.jl")
 
 end
