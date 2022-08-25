@@ -37,8 +37,8 @@ function read_ascii(filename::AbstractString; lazy = false)
     return output
 end
 
-function write_ascii(filename::AbstractString, args::NamedTuple)
-    write_ascii(filename; args...)
+function write_ascii(filename::AbstractString, dat::AbstractArray, args::NamedTuple)
+    write_ascii(filename, dat; args...)
 end
 
 """
@@ -46,15 +46,20 @@ end
 
 Writes data and header in an [AAIGrid](https://gdal.org/drivers/raster/aaigrid.html) raster file.
 
+# Argument
+
+ - `dat`: the `AbstractArray` of data to write
+
 # Keywords
 
  - `ncols` and `nrows`: numbers of columns and rows
  - `xll` and `yll`: coordinates of the lower-left corner
  - `dx` and `dy`: dx and dy cell sizes in coordinate units per pixel
  - `nodatavalue`: a value that should be considered as holding no data
- - `dat` : an `AbstractArray` of the raster data. Only two-dimensional arrays are supported.
+
+Returns the written file name.
 """
-function write_ascii(filename::AbstractString; ncols, nrows, xll, yll, dx, dy, nodatavalue, dat::AbstractArray{T, 2})
+function write_ascii(filename::AbstractString, dat::AbstractArray{T, 2}; ncols, nrows, xll, yll, dx, dy, nodatavalue) where T
     size(dat) == (nrows, ncols) || throw(ArgumentError("$nrows rows and $ncols cols incompatible with array of size $(size(dat))"))
     # Write
     open(filename, "w") do f
@@ -69,8 +74,8 @@ function write_ascii(filename::AbstractString; ncols, nrows, xll, yll, dx, dy, n
             NODATA_value  $(string(nodatavalue))
             """
         )
-        for col in 1:nrows # ascii format is column by column
-            write(f, " " * join(dat[:, col], " ") * "\n")
+        for row in 1:nrows # fill row by row
+            write(f, " " * join(dat[row, :], " ") * "\n")
         end
     end
     return filename
