@@ -1,15 +1,13 @@
 """
-    read_ascii
+    read_ascii(filename::AbstractString) => Union{Tuple{Array, NamedTuple}, NamedTuple}
 
 Reads an ASCII file. Parameters are parsed according to the [AAIGrid](https://gdal.org/drivers/raster/aaigrid.html) format.
 
-# Arguments
-
- - `filename`: an AbstractString of the filename
-
 # Keywords
 
- - `lazy`: when set to `true`, only the header of `filename` will be read.
+ - `lazy`: when set to `true`, only the header of `filename` will be read, and only the `NamedTuple` of parameters be returned.
+
+If not `lazy`, Returns a `Tuple` with: an `Array` of the data and a `NamedTuple` of the header information.
 """
 function read_ascii(filename::AbstractString; lazy = false)
     isfile(filename) || throw(ArgumentError("File $filename does not exist"))
@@ -43,7 +41,20 @@ function write_ascii(filename::AbstractString, args::NamedTuple)
     write_ascii(filename; args...)
 end
 
-function write_ascii(filename; ncols, nrows, xll, yll, dx, dy, nodatavalue, dat)
+"""
+    write_ascii(filename::AbstractString; kwargs...)
+
+Writes data and header in an [AAIGrid](https://gdal.org/drivers/raster/aaigrid.html) raster file.
+
+# Keywords
+
+ - `ncols` and `nrows`: numbers of columns and rows
+ - `xll` and `yll`: coordinates of the lower-left corner
+ - `dx` and `dy`: dx and dy cell sizes in coordinate units per pixel
+ - `nodatavalue`: a value that should be considered as holding no data
+ - `dat` : an `AbstractArray` of the raster data. Only two-dimensional arrays are supported.
+"""
+function write_ascii(filename::AbstractString; ncols, nrows, xll, yll, dx, dy, nodatavalue, dat::AbstractArray{T, 2})
     size(dat) == (nrows, ncols) || throw(ArgumentError("$nrows rows and $ncols cols incompatible with array of size $(size(dat))"))
     # Write
     open(filename, "w") do f
