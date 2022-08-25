@@ -1,7 +1,7 @@
 # ASCIIrasters.jl
 
-[![Build Status](https://github.com/jguerber/ASCIIrasters.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/jguerber/ASCIIrasters.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![Coverage](https://codecov.io/gh/jguerber/ASCIIrasters.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/jguerber/ASCIIrasters.jl)
+[![Build Status](https://github.com/jguerber/ASCIIrasters.jl/actions/workflows/CI.yml/badge.svg?branch=master)](https://github.com/jguerber/ASCIIrasters.jl/actions/workflows/CI.yml?query=branch%3Amaster)
+[![Coverage](https://codecov.io/gh/jguerber/ASCIIrasters.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/jguerber/ASCIIrasters.jl)
 
 Simple read and write functions for ASCII raster files. The ASCII format convention used is [AAIGrid](https://gdal.org/drivers/raster/aaigrid.html) (the QGIS default for ASCII rasters). 
 
