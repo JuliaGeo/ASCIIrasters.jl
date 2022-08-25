@@ -28,4 +28,8 @@ using Test
         example2 = write_ascii("../example/small2.asc", asc[1], asc[2])
         @test read_ascii("../example/small2.asc")[1] == asc[1]
     end
+
+    # cleanup
+    rm("test.asc")
+    rm("../example/small2.asc")
 end
