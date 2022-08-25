@@ -1,0 +1,13 @@
+name = "ASCIIrasters"
+uuid = "81770e7c-c736-4fa5-8129-46dd21831640"
+authors = ["Josquin Guerber and collaborators"]
+version = "0.1.0"
+
+[compat]
+julia = "1.7.3"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
