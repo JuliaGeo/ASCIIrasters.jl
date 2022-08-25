@@ -1,5 +1,5 @@
 module ASCIIrasters
 
-# Write your package code here.
+include("src/io.jl")
 
 end
