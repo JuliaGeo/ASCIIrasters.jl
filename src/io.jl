@@ -65,10 +65,14 @@ Writes data and header in an [AAIGrid](https://gdal.org/drivers/raster/aaigrid.h
 
 Returns the written file name.
 """
-function write_ascii(filename::AbstractString, dat::AbstractArray{T, 2}; ncols, nrows, xll, yll, dx, dy, nodatavalue, detecttype = false) where T
+function write_ascii(filename::AbstractString, dat::AbstractArray{T, 2}; ncols, nrows, xll, yll, dx, dy, nodatavalue::Union{AbstractFloat, Int32, Int64}, detecttype = false) where T
     size(dat) == (nrows, ncols) || throw(ArgumentError("$nrows rows and $ncols cols incompatible with array of size $(size(dat))"))
 
-    datatype = detecttype ? typeof(nodatavalue) : Float32
+    datatype = if detecttype
+        typeof(nodatavalue) <: AbstractFloat ? Float32 : Int32 
+    else
+        Float32
+    end
     
     # ensure right type for dat and nodatavalue
     dat = datatype.(dat)
