@@ -41,8 +41,8 @@ function read_ascii(filename::AbstractString; lazy = false)
     return output
 end
 
-function write_ascii(filename::AbstractString, dat::AbstractArray, args::NamedTuple)
-    write_ascii(filename, dat; args...)
+function write_ascii(filename::AbstractString, dat::AbstractArray, args::NamedTuple; kwargs...)
+    write_ascii(filename, dat; args..., kwargs...)
 end
 
 """
@@ -61,12 +61,19 @@ Writes data and header in an [AAIGrid](https://gdal.org/drivers/raster/aaigrid.h
  - `dx` and `dy`: dx and dy cell sizes in coordinate units per pixel
  - `nodatavalue`: a value that should be considered as holding no data
 
+ - `detecttype`: when set to `true`, elements of `dat` are assumed to be of the same type as `nodatavalue`. Leave `false` to coerce everything (both `dat` and `nodatavalue` to `Float32`).
+
 Returns the written file name.
 """
-function write_ascii(filename::AbstractString, dat::AbstractArray{T, 2}; ncols, nrows, xll, yll, dx, dy, nodatavalue) where T
+function write_ascii(filename::AbstractString, dat::AbstractArray{T, 2}; ncols, nrows, xll, yll, dx, dy, nodatavalue, detecttype = false) where T
     size(dat) == (nrows, ncols) || throw(ArgumentError("$nrows rows and $ncols cols incompatible with array of size $(size(dat))"))
-    # coerce to Float32
-    dat = Float32.(dat)
+
+    datatype = detecttype ? typeof(nodatavalue) : Float32
+    
+    # ensure right type for dat and nodatavalue
+    dat = datatype.(dat)
+    nodatavalue = datatype(nodatavalue)
+
     # Write
     open(filename, "w") do f
         write(f,
@@ -77,7 +84,7 @@ function write_ascii(filename::AbstractString, dat::AbstractArray{T, 2}; ncols, 
             yllcorner    $(string(yll))
             dx           $(string(dx))
             dy           $(string(dy))
-            NODATA_value  $(string(Float32(nodatavalue)))
+            NODATA_value  $(string(nodatavalue))
             """
         )
         for row in 1:nrows # fill row by row
