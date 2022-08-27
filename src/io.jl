@@ -1,13 +1,13 @@
 """
     read_ascii(filename::AbstractString) => Union{Tuple{Array, NamedTuple}, NamedTuple}
 
-Reads an ASCII file. Parameters are parsed according to the [AAIGrid](https://gdal.org/drivers/raster/aaigrid.html) format.
+Reads an ASCII file. Parameters are parsed according to the [AAIGrid](https://gdal.org/drivers/raster/aaigrid.html) format. Data elements are assumed to be of the same type as the nodatavalue header parameter.
 
 # Keywords
 
  - `lazy`: when set to `true`, only the header of `filename` will be read, and only the `NamedTuple` of parameters be returned.
 
-If not `lazy`, Returns a `Tuple` with: an `Array` of the data and a `NamedTuple` of the header information.
+If not `lazy`, returns a `Tuple` with: an `Array` of the data and a `NamedTuple` of the header information.
 """
 function read_ascii(filename::AbstractString; lazy = false)
     isfile(filename) || throw(ArgumentError("File $filename does not exist"))
