@@ -18,15 +18,19 @@ function read_ascii(filename::AbstractString; lazy = false)
         yll = parse(Float64, match(r"yllcorner (.+)", readline(file)).captures[1])
         dx = parse(Float64, match(r"dx (.+)", readline(file)).captures[1])
         dy = parse(Float64, match(r"dy (.+)", readline(file)).captures[1])
-        NA = parse(Float64, match(r"NODATA_value (.+)", readline(file)).captures[1])
+        na_str = match(r"NODATA_value (.+)", readline(file)).captures[1]
+
+        # no floating point in nodata ? datatype is considered int
+        datatype = isnothing(match(r"[.]", na_str)) ? Int32 : Float32
+        NA = parse(datatype, na_str)
 
         params = (nrows = nr, ncols = nc, xll = xll, yll = yll, dx = dx, dy = dy, nodatavalue = NA)
 
         if !lazy
-            out = Array{Float64}(undef, nr, nc)
+            out = Array{datatype}(undef, nr, nc)
 
             for row in 1:nr
-                out[row, :] = parse.(Float64, split(readline(file), " ")[2:end]) # data lines start with a space
+                out[row, :] = parse.(datatype, split(readline(file), " ")[2:end]) # data lines start with a space
             end
             output = (out, params)
         else
@@ -61,6 +65,8 @@ Returns the written file name.
 """
 function write_ascii(filename::AbstractString, dat::AbstractArray{T, 2}; ncols, nrows, xll, yll, dx, dy, nodatavalue) where T
     size(dat) == (nrows, ncols) || throw(ArgumentError("$nrows rows and $ncols cols incompatible with array of size $(size(dat))"))
+    # coerce to Float32
+    dat = Float32.(dat)
     # Write
     open(filename, "w") do f
         write(f,
@@ -71,7 +77,7 @@ function write_ascii(filename::AbstractString, dat::AbstractArray{T, 2}; ncols, 
             yllcorner    $(string(yll))
             dx           $(string(dx))
             dy           $(string(dy))
-            NODATA_value  $(string(nodatavalue))
+            NODATA_value  $(string(Float32(nodatavalue)))
             """
         )
         for row in 1:nrows # fill row by row
