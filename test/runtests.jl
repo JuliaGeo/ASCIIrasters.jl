@@ -6,6 +6,7 @@ using Test
     @testset "read" begin
         @test read_ascii("../example/small.asc"; lazy = true) isa NamedTuple
         @test asc[1][2,3] == 3
+        @test typeof(asc[1]) == Matrix{Int32}
         @test_throws ArgumentError read_ascii("doesntexist.asc")
     end
 
@@ -28,6 +29,7 @@ using Test
 
     @testset "read and write" begin
         @test float_asc != asc
+        @test typeof(float_asc[1]) == Matrix{Float32}
         example2 = write_ascii("../example/small2.asc", asc[1], asc[2])
         @test read_ascii("../example/small2.asc")[1] == asc[1]
     end
