@@ -52,6 +52,17 @@ using Test
             dy = 1,
             nodatavalue = 1.0,
         ); detecttype = true) == "./test4.asc"
+
+        # weird nodatavalue types are explicitly not allowed
+        @test_throws TypeError write_ascii("./test4.asc", dat2, (
+            ncols = 4,
+            nrows = 4,
+            xll = 15,
+            yll = 12,
+            dx = 1,
+            dy = 1,
+            nodatavalue = "1.0",
+        ); detecttype = true)
     end
 
     # cleanup
