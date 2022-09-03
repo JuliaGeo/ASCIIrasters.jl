@@ -62,7 +62,7 @@ function _read_header(filename::AbstractString)
     header["nlines"] = length(header)
 
     # check required arguments and parse them to correct types
-    header = _check_and_parse(header)
+    header = _check_and_parse_required(header)
 
     # handle optional cellsize
     header = _cellsize_or_dxdy(header)
@@ -75,7 +75,7 @@ end
 
 Checks that all required header parameters are here and parses them to the convenient types.
 """
-function _check_and_parse(header::Dict{String, Any})
+function _check_and_parse_required(header::Dict{String, Any})
     haskey(header, "nrows") || _throw_missing_line("nrows")
     haskey(header, "ncols") || _throw_missing_line("ncols")
     haskey(header, "xllcorner") || _throw_missing_line("xllcorner")
@@ -93,8 +93,12 @@ function _cellsize_or_dxdy(header::Dict{String, Any})
     
     if haskey(header, "cellsize")
 
-        header["dx"] = header["cellsize"]
-        header["dy"] = header["cellsize"]
+        haskey(header, "dx") && @warn "Provided cellsize, ignoring dx"
+        haskey(header, "dy") && @warn "Provided cellsize, ignoring dy"
+
+        cs = parse(Float64, header["cellsize"])
+        header["dx"] = cs
+        header["dy"] = cs
 
         delete!(header, "cellsize")
     else
