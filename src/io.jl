@@ -1,7 +1,7 @@
 """
     read_ascii(filename::AbstractString) => Union{Tuple{Array, NamedTuple}, NamedTuple}
 
-Reads an ASCII file. Parameters are parsed according to the [AAIGrid](https://gdal.org/drivers/raster/aaigrid.html) format. Data elements are assumed to be of the same type as the nodatavalue header parameter.
+Reads an ASCII file. Parameters are parsed according to the [AAIGrid](https://gdal.org/drivers/raster/aaigrid.html) format. Data elements are assumed to be of the same type as the nodatavalue header parameter if possible. If there is no NODATA_value field in the header, data type is estimated by checking if there are any floating numbers in the first 10 data rows.
 
 # Keywords
 
@@ -11,34 +11,26 @@ If not `lazy`, returns a `Tuple` with: an `Array` of the data and a `NamedTuple`
 """
 function read_ascii(filename::AbstractString; lazy = false)
     isfile(filename) || throw(ArgumentError("File $filename does not exist"))
-    output = open(filename, "r") do file
-        nc = parse(Int, match(r"ncols (.+)", readline(file)).captures[1])
-        nr = parse(Int, match(r"nrows (.+)", readline(file)).captures[1])
-        xll = parse(Float64, match(r"xllcorner (.+)", readline(file)).captures[1])
-        yll = parse(Float64, match(r"yllcorner (.+)", readline(file)).captures[1])
-        dx = parse(Float64, match(r"dx (.+)", readline(file)).captures[1])
-        dy = parse(Float64, match(r"dy (.+)", readline(file)).captures[1])
-        na_str = match(r"NODATA_value (.+)", readline(file)).captures[1]
 
-        # no floating point in nodata ? datatype is considered int
-        datatype = isnothing(match(r"[.]", na_str)) ? Int32 : Float32
-        NA = parse(datatype, na_str)
+    header = _read_header(filename)
 
-        params = (nrows = nr, ncols = nc, xll = xll, yll = yll, dx = dx, dy = dy, nodatavalue = NA)
+    pars = (
+        nrows = header["nrows"],
+        ncols = header["ncols"],
+        xll = header["xllcorner"],
+        yll = header["yllcorner"],
+        dx = header["dx"],
+        dy = header["dy"],
+        nodatavalue = header["NODATA_value"]
+    )
 
-        if !lazy
-            out = Array{datatype}(undef, nr, nc)
+    if !lazy
+        data = _read_data(filename, header)
 
-            for row in 1:nr
-                out[row, :] = parse.(datatype, split(readline(file), " ")[2:end]) # data lines start with a space
-            end
-            output = (out, params)
-        else
-            output = params
-        end
+        return (data, pars)
     end
 
-    return output
+    return pars
 end
 
 """
@@ -73,6 +65,7 @@ function _read_header(filename::AbstractString)
     # handle optional cellsize
     header = _cellsize_or_dxdy(header)
 
+    # check if nodata exists, if not sets to default
     header = _check_nodata(header)
 
     return header
@@ -100,6 +93,7 @@ function _read_data(filename::AbstractString, header::Dict{String, Any})
         datatype = header["datatype"]
     end
     out = map(l -> parse.(datatype, l), raw)
+
     return mapreduce(permutedims, vcat, out) # convert to matrix
 end
 
