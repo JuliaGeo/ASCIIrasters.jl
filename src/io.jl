@@ -71,6 +71,11 @@ function _read_header(filename::AbstractString)
     return header
 end
 
+"""
+    _read_data
+
+Looks in `header` for a number of lines to ignore, then writes the following lines in a matrix with required element type.
+"""
 function _read_data(filename::AbstractString, header::Dict{String, Any})
     # only store data lines in a variable
     raw = open(readlines, filename)[(header["nlines"]+1):end]
