@@ -41,6 +41,77 @@ function read_ascii(filename::AbstractString; lazy = false)
     return output
 end
 
+function _read_header(filename::AbstractString)
+    header = Dict{String, Any}()
+    open(filename, "r") do f
+        line = readline(f)
+        while line[1] != ' '
+            # split line
+            spl = split(line, ' ')
+            # remove "" elements
+            clean = deleteat!(spl, findall(x -> x == "", spl))
+            # add to header
+            header[clean[1]] = clean[2]
+
+            # continue reading
+            line = readline(f)
+        end
+    end
+
+    # store number of header lines in file
+    header["nlines"] = length(header)
+
+    # check required arguments and parse them to correct types
+    header = _check_and_parse(header)
+
+    # handle optional cellsize
+    header = _cellsize_or_dxdy(header)
+
+    return header
+end
+
+"""
+    _check_and_parse
+
+Checks that all required header parameters are here and parses them to the convenient types.
+"""
+function _check_and_parse(header::Dict{String, Any})
+    haskey(header, "nrows") || _throw_missing_line("nrows")
+    haskey(header, "ncols") || _throw_missing_line("ncols")
+    haskey(header, "xllcorner") || _throw_missing_line("xllcorner")
+    haskey(header, "yllcorner") || _throw_missing_line("yllcorner")
+
+    header["nrows"] = parse(Int, header["nrows"])
+    header["ncols"] = parse(Int, header["ncols"])
+    header["xllcorner"] = parse(Float64, header["xllcorner"])
+    header["yllcorner"] = parse(Float64, header["yllcorner"])
+
+    return header
+end
+
+function _cellsize_or_dxdy(header::Dict{String, Any})
+    
+    if haskey(header, "cellsize")
+
+        header["dx"] = header["cellsize"]
+        header["dy"] = header["cellsize"]
+
+        delete!(header, "cellsize")
+    else
+        haskey(header, "dx") || _throw_missing_line("dx")
+        haskey(header, "dy") || _throw_missing_line("dy")
+
+        header["dx"] = parse(Float64, header["dx"])
+        header["dy"] = parse(Float64, header["dy"])
+    end
+
+    return header
+end
+
+function _throw_missing_line(par::String)
+    throw("$par not found in file header")
+end
+
 function write_ascii(filename::AbstractString, dat::AbstractArray, args::NamedTuple; kwargs...)
     write_ascii(filename, dat; args..., kwargs...)
 end
