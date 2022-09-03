@@ -78,6 +78,31 @@ function _read_header(filename::AbstractString)
     return header
 end
 
+function _read_data(filename::AbstractString, header::Dict{String, Any})
+    # only store data lines in a variable
+    raw = open(readlines, filename)[(header["nlines"]+1):end]
+
+    raw = map(l -> split(l, ' ')[2:end], raw) # remove spaces:  this is now a
+    # vector of vector of strings
+
+    if header["datatype"] == Any # if datatype is undetermined yet
+        ncheck = min(header["nrows"], 10) # check 10 rows or less
+        found_float = false
+        for i in 1:ncheck
+            if !all(map(w -> match(r"[.]", w) === nothing, raw[i]))
+                found_float = true
+                break
+            end
+        end
+
+        datatype = found_float ? Float32 : Int32
+    else
+        datatype = header["datatype"]
+    end
+    out = map(l -> parse.(datatype, l), raw)
+    return mapreduce(permutedims, vcat, out) # convert to matrix
+end
+
 """
     _check_and_parse
 
