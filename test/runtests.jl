@@ -76,6 +76,18 @@ using Test
         ); detecttype = true)
     end
 
+    @testset "_read_header" begin
+        a = ASCIIrasters._read_header("../example/cellsize.asc")
+        b = ASCIIrasters._read_header("../example/cellsizeanddx.asc")
+        c = ASCIIrasters._read_header("../example/nonodata.asc")
+        @test length(a) == 9
+        @test length(b) == 9
+        @test length(c) == 9
+        @test !haskey(b, "cellsize")
+        @test !haskey(a, "cellsize")
+        @test c["datatype"] == Any
+    end
+
     # cleanup
     rm("./test.asc")
     rm("./test2.asc")
