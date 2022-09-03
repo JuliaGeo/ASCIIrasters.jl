@@ -56,16 +56,20 @@ Writes data and header in an [AAIGrid](https://gdal.org/drivers/raster/aaigrid.h
 
 # Keywords
 
+Required:
+
  - `ncols` and `nrows`: numbers of columns and rows
  - `xll` and `yll`: coordinates of the lower-left corner
  - `dx` and `dy`: dx and dy cell sizes in coordinate units per pixel
- - `nodatavalue`: a value that should be considered as holding no data
 
- - `detecttype`: when set to `true`, elements of `dat` are assumed to be of the same type as `nodatavalue`. Leave `false` to coerce everything (both `dat` and `nodatavalue` to `Float32`).
+Optional:
+
+ - `nodatavalue`: a value that should be considered as representing no data. Default is -9999.0
+ - `detecttype`: when set to `true`, elements of `dat` are converted to the same type as `nodatavalue`. Leave `false` to coerce everything (both `dat` and `nodatavalue`) to `Float32`.
 
 Returns the written file name.
 """
-function write_ascii(filename::AbstractString, dat::AbstractArray{T, 2}; ncols::Int, nrows::Int, xll::Real, yll::Real, dx::Real, dy::Real, nodatavalue::Union{AbstractFloat, Int32, Int64}, detecttype = false) where T
+function write_ascii(filename::AbstractString, dat::AbstractArray{T, 2}; ncols::Int, nrows::Int, xll::Real, yll::Real, dx::Real, dy::Real, nodatavalue::Union{AbstractFloat, Int32, Int64}=-9999.0, detecttype = false) where T
     size(dat) == (nrows, ncols) || throw(ArgumentError("$nrows rows and $ncols cols incompatible with array of size $(size(dat))"))
 
     datatype = if detecttype

@@ -22,7 +22,16 @@ using Test
     dat = [1 1 1 1;2 2 2 2;3 3 3 3;4 4 4 4]
     
     @testset "write" begin
+        pars2 = (
+            ncols = 4,
+            nrows = 4,
+            xll = 15,
+            yll = 12,
+            dx = 1,
+            dy = 1,
+        ) # optional nodatavalue argument
         @test write_ascii("./test.asc", dat, pars) == "./test.asc"
+        @test write_ascii("./test.asc", dat, pars2) == "./test.asc"
     end
 
     float_asc = read_ascii("test.asc")
