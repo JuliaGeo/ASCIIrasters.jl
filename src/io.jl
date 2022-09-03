@@ -41,6 +41,12 @@ function read_ascii(filename::AbstractString; lazy = false)
     return output
 end
 
+"""
+    _read_header
+
+Reads the first lines that don't start with a space. Converts them to a Dict
+with 9 entries with all the parameters we need both for assessing data type and keeping header parameters.
+"""
 function _read_header(filename::AbstractString)
     header = Dict{String, Any}()
     open(filename, "r") do f
@@ -66,6 +72,8 @@ function _read_header(filename::AbstractString)
 
     # handle optional cellsize
     header = _cellsize_or_dxdy(header)
+
+    header = _check_nodata(header)
 
     return header
 end
@@ -107,6 +115,26 @@ function _cellsize_or_dxdy(header::Dict{String, Any})
 
         header["dx"] = parse(Float64, header["dx"])
         header["dy"] = parse(Float64, header["dy"])
+    end
+
+    return header
+end
+
+"""
+    _check_nodata
+
+If NODATA_value is a header line, keep it as nodatavalue and detect its type. If
+NODATA_value is missing, we set it to -9999.0 and its type to Any.
+"""
+function _check_nodata(header::Dict{String, Any})
+    if haskey(header, "NODATA_value")
+        # no floating point in nodata ? datatype is considered int
+        datatype = isnothing(match(r"[.]", header["NODATA_value"])) ? Int32 : Float32
+        header["NODATA_value"] = parse(datatype, header["NODATA_value"])
+        header["datatype"] = datatype
+    else
+        header["NODATA_value"] = -9999.0
+        header["datatype"] = Any
     end
 
     return header
