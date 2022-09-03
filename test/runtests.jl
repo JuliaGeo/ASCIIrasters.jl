@@ -88,6 +88,13 @@ using Test
         @test c["datatype"] == Any
     end
 
+    @testset "detect type from data" begin
+        d = ASCIIrasters.read_ascii("../example/nonodata.asc")
+        e = ASCIIrasters.read_ascii("../example/nonodatafloat.asc")
+        @test typeof(d[1]) == Matrix{Int32}
+        @test typeof(e[1]) == Matrix{Float32}
+    end
+
     # cleanup
     rm("./test.asc")
     rm("./test2.asc")
