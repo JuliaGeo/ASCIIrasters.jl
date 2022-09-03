@@ -93,6 +93,8 @@ using Test
         e = ASCIIrasters.read_ascii("../example/nonodatafloat.asc")
         @test typeof(d[1]) == Matrix{Int32}
         @test typeof(e[1]) == Matrix{Float32}
+
+        @test_throws "nrows not found in file header" ASCIIrasters.read_ascii("../example/missingnrow.asc")
     end
 
     # cleanup
