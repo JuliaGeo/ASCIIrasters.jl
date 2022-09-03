@@ -5,13 +5,13 @@ DocMeta.setdocmeta!(ASCIIrasters, :DocTestSetup, :(using ASCIIrasters); recursiv
 
 makedocs(;
     modules=[ASCIIrasters],
-    authors="Josquin Guerber and collaborators",
-    repo="https://github.com/jguerber/ASCIIrasters.jl/blob/{commit}{path}#{line}",
+    authors="Josquin Guerber, Rafael Schouten and collaborators",
+    repo="https://github.com/JuliaGeo/ASCIIrasters.jl/blob/{commit}{path}#{line}",
     sitename="ASCIIrasters.jl",
     format=Documenter.HTML(;
         prettyurls=get(ENV, "CI", "false") == "true",
         canonical="https://jguerber.github.io/ASCIIrasters.jl",
-        edit_link="main",
+        edit_link="master",
         assets=String[],
     ),
     pages=[
@@ -20,6 +20,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/jguerber/ASCIIrasters.jl",
-    devbranch="main",
+    repo="github.com/JuliaGeo/ASCIIrasters.jl",
+    devbranch="master",
 )
