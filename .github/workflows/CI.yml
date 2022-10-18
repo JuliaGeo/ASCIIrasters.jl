@@ -3,7 +3,8 @@ on:
   push:
     branches:
       - master
-    tags: '*'
+    tags:
+      - '*'
   pull_request:
 concurrency:
   # Skip intermediate builds: always.
