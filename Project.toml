@@ -1,7 +1,7 @@
 name = "ASCIIrasters"
 uuid = "81770e7c-c736-4fa5-8129-46dd21831640"
 authors = ["Josquin Guerber and collaborators"]
-version = "0.1.0"
+version = "0.1.1"
 
 [compat]
 julia = "1.6"
