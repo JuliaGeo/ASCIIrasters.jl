@@ -20,7 +20,7 @@ using Test
             nodatavalue = 1,
         )
     dat = [1 1 1 1;2 2 2 2;3 3 3 3;4 4 4 4]
-    
+
     @testset "write" begin
         pars2 = (
             ncols = 4,
@@ -95,6 +95,11 @@ using Test
         @test typeof(e[1]) == Matrix{Float32}
 
         @test_throws "nrows not found in file header" ASCIIrasters.read_ascii("../example/missingnrow.asc")
+    end
+
+    @testset "test different whitespaces" begin
+        d,h = ASCIIrasters.read_ascii("../example/swisstopo.asc")
+        @test size(d)==(h.nrows,h.ncols)
     end
 
     # cleanup

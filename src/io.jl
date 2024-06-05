@@ -1,7 +1,7 @@
 """
     read_ascii(filename::AbstractString) => Union{Tuple{Array, NamedTuple}, NamedTuple}
 
-Reads an ASCII file. Parameters are parsed according to the [AAIGrid](https://gdal.org/drivers/raster/aaigrid.html) format. Data elements are assumed to be of the same type as the nodatavalue header parameter if possible. If there is no NODATA_value field in the header, data type is estimated by checking if there are any floating numbers in the first 10 data rows.
+Reads an ASCII file. Parameters are parsed according to the [AAIGrid](https://gdal.org/drivers/raster/aaigrid.html) format. Data elements are assumed to be of the same type as the nodatavalue header parameter if possible. If there is no nodata_value field in the header, data type is estimated by checking if there are any floating numbers in the first 10 data rows.
 
 # Keywords
 
@@ -21,7 +21,7 @@ function read_ascii(filename::AbstractString; lazy = false)
         yll = header["yllcorner"],
         dx = header["dx"],
         dy = header["dy"],
-        nodatavalue = header["NODATA_value"]
+        nodatavalue = header["nodata_value"]
     )
 
     if !lazy
@@ -36,23 +36,23 @@ end
 """
     _read_header
 
-Reads the first lines that don't start with a space. Converts them to a Dict
+Reads the first lines that don't start with a number. Converts them to a Dict
 with 9 entries with all the parameters we need both for assessing data type and keeping header parameters.
 """
 function _read_header(filename::AbstractString)
     header = Dict{String, Any}()
     open(filename, "r") do f
-        line = readline(f)
-        while line[1] != ' '
-            # split line
-            spl = split(line, ' ')
+        # read and split line
+        spl = split(strip(readline(f)), ' ')
+        while tryparse(Float64, spl[1])===nothing # header lines do not start with a number
+
             # remove "" elements
             clean = deleteat!(spl, findall(x -> x == "", spl))
             # add to header
-            header[clean[1]] = clean[2]
+            header[lowercase(clean[1])] = clean[2]
 
-            # continue reading
-            line = readline(f)
+            # continue reading and split line
+            spl = split(strip(readline(f)), ' ')
         end
     end
 
@@ -78,16 +78,18 @@ Looks in `header` for a number of lines to ignore, then writes the following lin
 """
 function _read_data(filename::AbstractString, header::Dict{String, Any})
     # only store data lines in a variable
-    raw = open(readlines, filename)[(header["nlines"]+1):end]
+    io = open(filename)
+    # read the header
+    [readline(io) for i=1:header["nlines"]]
 
-    raw = map(l -> split(l, ' ')[2:end], raw) # remove spaces:  this is now a
-    # vector of vector of strings
+    # now read the rest of the file
+    raw = split(read(io, String))
 
     if header["datatype"] == Any # if datatype is undetermined yet
-        ncheck = min(header["nrows"], 10) # check 10 rows or less
+        ncheck = min(header["nrows"]*header["ncols"], 100) # check 100 numbers or less
         found_float = false
         for i in 1:ncheck
-            if !all(map(w -> match(r"[.]", w) === nothing, raw[i]))
+            if match(r"[.]", raw[i]) !== nothing
                 found_float = true
                 break
             end
@@ -97,9 +99,10 @@ function _read_data(filename::AbstractString, header::Dict{String, Any})
     else
         datatype = header["datatype"]
     end
-    out = map(l -> parse.(datatype, l), raw)
 
-    return mapreduce(permutedims, vcat, out) # convert to matrix
+    out = parse.(datatype, raw)
+
+    return permutedims(reshape(out, header["ncols"], header["nrows"]))
 end
 
 """
@@ -122,7 +125,7 @@ function _check_and_parse_required(header::Dict{String, Any})
 end
 
 function _cellsize_or_dxdy(header::Dict{String, Any})
-    
+
     if haskey(header, "cellsize")
 
         haskey(header, "dx") && @warn "Provided cellsize, ignoring dx"
@@ -147,17 +150,17 @@ end
 """
     _check_nodata
 
-If NODATA_value is a header line, keep it as nodatavalue and detect its type. If
-NODATA_value is missing, we set it to -9999.0 and its type to Any.
+If nodata_value is a header line, keep it as nodatavalue and detect its type. If
+nodata_value is missing, we set it to -9999.0 and its type to Any.
 """
 function _check_nodata(header::Dict{String, Any})
-    if haskey(header, "NODATA_value")
+    if haskey(header, "nodata_value")
         # no floating point in nodata ? datatype is considered int
-        datatype = isnothing(match(r"[.]", header["NODATA_value"])) ? Int32 : Float32
-        header["NODATA_value"] = parse(datatype, header["NODATA_value"])
+        datatype = isnothing(match(r"[.]", header["nodata_value"])) ? Int32 : Float32
+        header["nodata_value"] = parse(datatype, header["nodata_value"])
         header["datatype"] = datatype
     else
-        header["NODATA_value"] = -9999.0
+        header["nodata_value"] = -9999.0
         header["datatype"] = Any
     end
 
@@ -200,11 +203,11 @@ function write_ascii(filename::AbstractString, dat::AbstractArray{T, 2}; ncols::
     size(dat) == (nrows, ncols) || throw(ArgumentError("$nrows rows and $ncols cols incompatible with array of size $(size(dat))"))
 
     datatype = if detecttype
-        typeof(nodatavalue) <: AbstractFloat ? Float32 : Int32 
+        typeof(nodatavalue) <: AbstractFloat ? Float32 : Int32
     else
         Float32
     end
-    
+
     # ensure right type for dat and nodatavalue
     dat = datatype.(dat)
     nodatavalue = datatype(nodatavalue)
