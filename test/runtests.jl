@@ -6,6 +6,7 @@ using Test
     @testset "read" begin
         @test read_ascii("../example/small.asc"; lazy = true) isa NamedTuple
         @test asc[1][2,3] == 3
+        @test asc[1][4,5] == 6
         @test typeof(asc[1]) == Matrix{Int32}
         @test_throws ArgumentError read_ascii("doesntexist.asc")
     end
