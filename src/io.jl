@@ -78,29 +78,30 @@ Looks in `header` for a number of lines to ignore, then writes the following lin
 """
 function _read_data(filename::AbstractString, header::Dict{String, Any})
     # only store data lines in a variable
-    io = open(filename)
-    # read the header
-    [readline(io) for i=1:header["nlines"]]
+    out = open(filename) do io
+        # read the header and discard to move the file pointer to the right place
+        [readline(io) for i=1:header["nlines"]]
 
-    # now read the rest of the file
-    raw = split(read(io, String))
+        # now read the rest of the file
+        raw = split(read(io, String))
 
-    if header["datatype"] == Any # if datatype is undetermined yet
-        ncheck = min(header["nrows"]*header["ncols"], 100) # check 100 numbers or less
-        found_float = false
-        for i in 1:ncheck
-            if match(r"[.]", raw[i]) !== nothing
-                found_float = true
-                break
+        if header["datatype"] == Any # if datatype is undetermined yet
+            ncheck = min(header["nrows"]*header["ncols"], 100) # check 100 numbers or less
+            found_float = false
+            for i in 1:ncheck
+                if match(r"[.]", raw[i]) !== nothing
+                    found_float = true
+                    break
+                end
             end
+
+            datatype = found_float ? Float32 : Int32
+        else
+            datatype = header["datatype"]
         end
 
-        datatype = found_float ? Float32 : Int32
-    else
-        datatype = header["datatype"]
+         return parse.(datatype, raw)
     end
-
-    out = parse.(datatype, raw)
 
     return permutedims(reshape(out, header["ncols"], header["nrows"]))
 end
